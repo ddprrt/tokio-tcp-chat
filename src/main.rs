@@ -27,14 +27,15 @@ async fn main() -> tokio::io::Result<()> {
                 tokio::select! {
                     // Reads from Channel, Sends to Socket
                     msg = rx.recv() => {
-                        let (other_addr, msg) = msg.unwrap();
-                        if other_addr != addr {
-                            writer.write_all(format!("{}: {}", other_addr, msg).as_bytes()).await.unwrap();
+                        if let Ok((other_addr, msg)) = msg {
+                            if other_addr != addr {
+                                writer.write_all(format!("{}: {}", other_addr, msg).as_bytes()).await.unwrap();
+                            }
                         }
                     }
                     // Reads from Socket, sends to Channel
                     result = reader.read_line(&mut buffer) => {
-                        if result.is_err() || buffer.trim() == "exit" {
+                        if result.is_err() || buffer.trim() == "exit" || buffer.is_empty() {
                             println!("Disconnected, {}", addr);
                             break;
                         }
